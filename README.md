@@ -1,6 +1,8 @@
 # Chordano
 A WebVR piano
 
+[Live Demo](https://mikebolt.github.io/chordano/chordano.html) (VR headset optional)
+
 ![A VR screenshot of two pianos](https://github.com/mikebolt/chordano/blob/master/2017-07-12-PM_03_44_16.png)
 
 This is a work in progress. It is called "Chordano" because I plan to add support for playing arbitrary chords with each controller.
