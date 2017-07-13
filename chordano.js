@@ -15,6 +15,11 @@ var A4_NOTE_INDEX = 57;
 
 var NOTES_PER_OCTAVE = 12;
 
+var WHITE_PROXY_CENTER = new THREE.Vector3(0.0, 0.01, -0.07);
+var BLACK_PROXY_CENTER = new THREE.Vector3(0.0, 0.01, -0.05);
+
+var KEY_PRESS_ROTATION = 0.085;
+
 var Note = function(parameter) {
     if (typeof parameter === 'string') {
         // TODO: support string notes
@@ -97,6 +102,13 @@ var PianoKey = function(isBlack) {
 
 Object.assign(PianoKey.prototype, THREE.EventDispatcher.prototype);
 
+function createProxyCenter(object, relativeCenter) {
+    var proxy = new THREE.Object3D();
+    object.position.set(-relativeCenter.x, -relativeCenter.y, -relativeCenter.z);
+    proxy.add(object);
+    return proxy;
+}
+
 // isFlattened is not supported yet.
 var PianoKeyboard = function(numKeys, lowestNote, isFlattened) {
 
@@ -138,18 +150,25 @@ var PianoKeyboard = function(numKeys, lowestNote, isFlattened) {
             
             if (isBlackKey) {
                 keyYOffset = (WHITE_KEY_HEIGHT + BLACK_KEY_HEIGHT) / 2.0;
-                keyZOffset = - (WHITE_KEY_DEPTH - BLACK_KEY_DEPTH) / 2.0;
+                keyZOffset = -(WHITE_KEY_DEPTH - BLACK_KEY_DEPTH) / 2.0;
             }
             
-            key.mesh.position.set(keyXOffset + xCenterOffset,
-                             keyYOffset,
-                             keyZOffset);
+            var proxyCenter = isBlackKey ? BLACK_PROXY_CENTER : WHITE_PROXY_CENTER;
+            var proxy = createProxyCenter(key.mesh, proxyCenter);
+            
+            keyXOffset += proxyCenter.x;
+            keyYOffset += proxyCenter.y;
+            keyZOffset += proxyCenter.z;
+            
+            proxy.position.set(keyXOffset + xCenterOffset,
+                               keyYOffset,
+                               keyZOffset);
+            
+            this.root.add(proxy);
             
             key.mesh.userData.note = note;
             key.mesh.userData.piano = this;
             key.mesh.userData.key = key;
-            
-            this.root.add(key.mesh);
             
             key.addEventListener('keyDown', keyDownListener);
             key.addEventListener('keyUp', keyUpListener);
@@ -170,14 +189,13 @@ var PianoKeyboard = function(numKeys, lowestNote, isFlattened) {
         var note = key.mesh.userData.note;
         synthesizer.playNote(note);
         
-        var pressTween = new TWEEN.Tween(key.mesh.rotation).to({x: 0.1}, 100);
+        var pressTween = new TWEEN.Tween(key.mesh.parent.rotation).to({x: KEY_PRESS_ROTATION}, 100);
         pressTween.start();
-        //key.mesh.rotation.x += 0.5;
     }
     
     function keyUpListener(keyUpEvent) {
         var key = keyUpEvent.target;
-        var releaseTween = new TWEEN.Tween(key.mesh.rotation).to({x: 0.0}, 100);
+        var releaseTween = new TWEEN.Tween(key.mesh.parent.rotation).to({x: 0.0}, 100);
         releaseTween.start();
     }
     
@@ -277,10 +295,6 @@ function init() {
             controller2.add(object.clone());
         });
         
-        console.log("Asdfasfas cool");
-        
-        
-        // Copied from three js webvr examples.
         WEBVR.getVRDisplay(function(display) {
             renderer.vr.setDevice(display);
             document.body.appendChild(WEBVR.getButton(display, renderer.domElement));
@@ -326,7 +340,7 @@ function init() {
         
         var mouse = new THREE.Vector2();
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
         
         raycaster.setFromCamera(mouse, camera);
         
@@ -334,7 +348,6 @@ function init() {
         if (key !== undefined) {
             console.log(key);
             
-            //var keyDownEvent = new Event('keyDown');
             key.dispatchEvent({'type': 'keyDown'});
             keysDownMouse.push(key);
         }
@@ -365,7 +378,7 @@ function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function animate() {
