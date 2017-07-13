@@ -9,11 +9,9 @@ This project has only been tested with the HTC Vive.
 
 - Highlight keys when a controller is near them
 
-- Use a synthesizer that sounds nicer
+- Fix the synthasizer in Firefox
 
 - Release keys when the trigger is released
-
-- Adjust axis of rotation for keys
 
 - Handle missing controllers better
 
